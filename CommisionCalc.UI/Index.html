@@ -1,0 +1,90 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Commision Page</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+    <script type="text/javascript" src="https://knockoutjs.com/downloads/knockout-3.5.1.js"></script>
+</head>
+<body>
+    <div >
+        <form id="commisionForm" data-bind="submit: add">
+            <label>Minimum value</label> <input type="number" id="minValue" data-bind="value:minValue" name="MinValue" />
+            <label>Maximum value</label> <input type="number" id="maxValue" data-bind="value:maxValue" name="MaxValue" />
+            <label>Commision value</label> <input type="number" id="CommisionValue" data-bind="value:commisionValue" name="CommisionValue" />
+            <input type="submit" value="Add" />
+        </form>
+    </div>
+    <br /><br />
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Minimum Value</th>
+                <th>Maximum Value</th>
+                <th>Commision Value</th>
+            </tr>
+        </thead>
+        <tbody data-bind="foreach: commisions">
+            <tr>
+                <td data-bind="text: minValue"></td>
+                <td data-bind="text: maxValue"></td>
+                <td data-bind="text: commisionValue"></td>
+            </tr>
+        </tbody>
+    </table>
+
+<br /><br />
+    <label>Input Sales </label><input type="number" id="sales" data-bind="value:sales" name="sales" />
+    <button data-bind="click: calculate">Calculate commision</button>
+    <br /><br/>
+    <span>Your commision amount:</span><span data-bind="text: totalcommision"></span>
+
+    <script type="text/javascript">
+        function CommisionsViewModel() {
+            var self = this;
+            self.hostURL = "http://localhost:56578/api/commisions";
+            self.commisions = ko.observableArray([]);
+            self.minValue = ko.observable().extend({ numeric: 0 });  
+            self.maxValue = ko.observable().extend({ numeric: 0 });
+            self.minValue.subscribe(function (newValue) {
+                document.getElementById("maxValue").setAttribute("min", newValue);
+            });
+            self.commisionValue = ko.observable();
+            self.sales = ko.observable().extend({ numeric: 0 });
+            self.totalcommision = ko.observable();
+            $.getJSON(self.hostURL, function (data) {
+                self.commisions(data);
+            });
+
+            self.add = function () {
+                    data = { minValue: parseInt(self.minValue()), maxValue: parseInt(self.maxValue()), commisionValue: parseInt(self.commisionValue()) };
+                    $.ajax({
+                        type: "POST",
+                        url: this.hostURL,
+                        dataType: "json",
+                        contentType: "application/json; charset=utf-8",
+                        data: JSON.stringify(data),
+                        success: function (response) {
+                            self.commisions(response);
+                        }
+                    });
+            }
+
+                
+            self.calculate = function () {
+                $.ajax({
+                    type: "PUT",
+                    url: this.hostURL + "?sales=" + parseInt(self.sales()),
+                    dataType: "json",
+                    contentType: "application/json; charset=utf-8",
+                    success: function (response) {
+                        self.totalcommision(response);
+                    }
+                });
+            }
+        }
+        ko.applyBindings(new CommisionsViewModel());
+    </script>
+</body>
+
+</html>
